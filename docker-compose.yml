@@ -19,11 +19,27 @@ services:
       - ./:/app
     env_file: ./.env
 
-  mysql:
+  db:
     image: mysql:latest
     container_name: mysql
-    volumes:
-      - mysql-data:/data
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: "12345"
+      MYSQL_DATABASE: "desafio"
+    ports:
+      - 3306:3306
+    networks:
+      desafio_network:
+        aliases:
+          - desafioapi
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      desafio_network:
+        aliases:
+          - desafioapi
