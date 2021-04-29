@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\NfController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +14,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::get('/', function () {
+    return "Enjoy the Silence...";
+});
+
+ Route::prefix('v1/nf')->group(function () {
+    Route::get('/',                       [NfController::class, 'index'])     ->name('allNfes');
+    Route::get('/chave/{chave}',          [NfController::class, 'show'])      ->name('showNfe');
 });

@@ -14,14 +14,14 @@ services:
         aliases:
           - desafioapi
     ports:
-      - '81:80'
+      - '8181:80'
     volumes:
       - ./:/app
     env_file: ./.env
 
   db:
     image: mysql:latest
-    container_name: mysql
+    container_name: mysql-db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: "12345"
@@ -31,7 +31,7 @@ services:
     networks:
       desafio_network:
         aliases:
-          - desafioapi
+          - mysqldb
 
   adminer:
     image: adminer:latest
@@ -42,4 +42,4 @@ services:
     networks:
       desafio_network:
         aliases:
-          - desafioapi
+          - adminer
