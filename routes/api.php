@@ -18,7 +18,7 @@ Route::get('/', function () {
     return "Enjoy the Silence...";
 });
 
- Route::prefix('v1/nf')->group(function () {
+ Route::prefix('v1/nf')->middleware("token")->group(function () {
     Route::get('/',                       [NfController::class, 'index'])     ->name('allNfes');
     Route::get('/chave/{chave}',          [NfController::class, 'show'])      ->name('showNfe');
 });

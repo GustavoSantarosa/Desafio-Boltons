@@ -14,7 +14,7 @@ services:
         aliases:
           - desafioapi
     ports:
-      - '8181:80'
+      - '85:80'
     volumes:
       - ./:/app
     env_file: ./.env
