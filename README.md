@@ -1,50 +1,85 @@
-# Desafio Boltons
- 
-[Desafio Boltons](https://www.notion.so/Desafio-Boltons-f40fd110d22a4fa3a6f8eb38defb62d1)
 
-**Sobre o desafio.**
 
-Esse desafio é proposto para avaliarmos o conhecimento da linguagem proposta e a assinatura de código do participante.O desafio propoe um caso de uso, simulando os desafios do dia-a-dia da Arquivei.Atualmente na arquivei temos um **API** para a disponibilização de documentos do tipo nota fiscal eletrônica (NFe), onde o cliente faz uma chamada utilizando **REST** e devolvemos de 0 até 50 arquivos XML com um encode em **base64**. O desafio proposto é:
+<h3 align="center">Desafio Boltons</h3>
 
-1. Integrar com a API da arquivei utilizando, os seguintes dados:
 
-- Endpoint: [https://sandbox-api.arquivei.com.br](https://sandbox-api.arquivei.com.br/)
-- Credenciais:
-    - As credenciais devem ser inseridas do cabeçalho da requisição (header):
-        - x-api-id: f96ae22f7c5d74fa4d78e764563d52811570588e
-        - x-api-key: cc79ee9464257c9e1901703e04ac9f86b0f387c2
-- Encoding:
-    - No cabeçalho também deve ser enviado o parâmetro content-type, com o valor "application/json".
+## 🧐 Sobre <a name = "about"></a>
 
-Exemplo em cURL da request:
+Desafio de boltons realizado utilizando api da arquivei.
 
-```bash
-curl -X GET \
-  https://sandbox-api.arquivei.com.br/v1/nfe/received \
-  -H 'Content-Type: application/json' \
-  -H 'x-api-id: f96ae22f7c5d74fa4d78e764563d52811570588e' \
-  -H 'x-api-key: cc79ee9464257c9e1901703e04ac9f86b0f387c2'
+## 🏁 Para iniciar o projeto
+
+Clone o projeto
+```
+gh repo clone GustavoSantarosa/Desafio-Boltons
 ```
 
-Caso ainda tenha dúvidas você pode consultar a documentação em: [https://docs.arquivei.com.br/?urls.primaryName=Arquivei%20API](https://docs.arquivei.com.br/?urls.primaryName=Arquivei%20API)
+Neste exemplo, o .env foi retirado do git ignore, então não se preocupe.
+em seguida, baixe as dependencias utilizadas no projeto
+```
+composer install
+```
 
-2. Para cada nota retornada via API inserir a **chave de acesso** mais o **valor** total da nota**,** em um banco de dados relacional de sua escolha, até o fim dos registros.3. Criar um endpoint (REST) no projeto onde o usuário informe uma **chave de acesso** e o sistema retorne o **valor** do documento.
+Com o docker start os containers
+```
+docker-compose up -d
+```
 
-# O que mais?
+Acesse o seu localhost e pronto, o projeto ja é para estar funcionando.
 
-- Documente como seu projeto se comporta e o passo-a-passo para a utilização do mesmo.
-- Crie um repositório github ou bitbucket e envie seus arquivos.
-- Utilize docker.
+## 🔧 rodando os testes <a name = "tests"></a>
+Para testar a aplicação utilizando tdd voce pode utilizar o comando do unit, nele foram criado alguns testes padroes, e bem simples apenas para demonstrar no desafio.
 
-# Extra
+```
+vendor/bin/phpunit
+```
 
-- Principios de código limpo (S.O.L.I.D)
-- Desacoplamento
-- Arquitetura em camadas (ou Hexagonal)
-- Testes unitários.
+Testes presentes:
 
-E bom desafio.
+- checa se o retorno da api é codigo 200.
+- checa se a estrutura do json da api esta de acordo com o esperado.
+- checa se o conteudo do retorno do endpoint esta de acordo com o esperado.
+- pega o valor da nota fiscal retornado na api, e subtrai por 1348.00 e checa se o resultado da 0
 
-## Envio do Desafio
+## 🎈 Utilizando
+Exemplo de cabeçalho para efetuar as requisições:
+```
+curl -X GET \
+  localhost/api/v1/nf \
+  -H 'Content-Type: application/json' \
+  -H 'x-api-id: 1234' \
+  -H 'x-api-key: 5678'
+```
 
-O link público para o repositório GIT e as informações relevantes devem ser enviadas para o email [**desafio.engenharia@arquivei.com.br**](mailto:desafio.engenharia@arquivei.com.br) com o assunto **Desafio Back End**
+No desafio, foram criados 2 endpoints, o primeiro é apenas uma consulta de notas na api da arquivei para podermos buscar uma chave de acesso para utilizarmos como exemplo no desafio.
+```
+localhost/api/v1/nf
+```
+
+e o segundo é o que foi proposto no desafio.
+```
+localhost/api/v1/nf/chave/{chave}
+```
+- neste endpoint, ele vai checar se a chave ja não existe no banco de dados do projeto, caso não exista ele consulta na api da arquivei
+
+- em seguida ele armazena no banco do projeto para consultas futuras, e devolve as informações requisitadas no desafio para o usuario.
+
+```
+localhost/api/v1/nf/chave/{chave}?nocache=1
+```
+- foi criado o parametro nocache para quando o usuario queira forçar a busca da nota na api da arquivei
+
+```
+localhost/api/v1/nf/chave/50171130290824000104550010000224381005443300?nocache=1
+```
+
+## ⛏️ Utilizado
+
+- [mysql](https://www.mysql.com/) - banco de dados
+- [php](https://www.php.net/) - linguagem
+- [laravel](https://laravel.com/) - framework
+
+## ✍️ Autor
+
+- [@Luis Gustavo Santarosa Pinto](https://github.com/GustavoSantarosa) - Idea & Initial work
+
