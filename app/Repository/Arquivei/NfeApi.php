@@ -15,12 +15,9 @@ class NfeApi {
     private $url;
 
     public function __construct() {
-        //$this->id   = env('ARQUIVEI_ID');
-        $this->id   = "329ea218aa65778fad452643fe4d9bdeba0673e6";
-        //$this->key  = env('ARQUIVEI_KEY');
-        $this->key  = "39020d7f2ff4485632166f578d486f0ab74174e0";
-        //$this->url  = env('ARQUIVEI_URL')."/v1/nfe/";
-        $this->url  = "https://sandbox-api.arquivei.com.br/v1/nfe/";
+        $this->id   = env('ARQUIVEI_ID');
+        $this->key  = env('ARQUIVEI_KEY');
+        $this->url  = env('ARQUIVEI_URL')."/v1/nfe/";
     }
 
     public function received($access_key=null) {
