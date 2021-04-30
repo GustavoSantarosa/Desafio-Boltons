@@ -25,13 +25,28 @@ Com o docker start os containers
 docker-compose up -d
 ```
 
+acesse o sh do container da api novamente
+```
+docker exec -it desafio-api sh
+```
+e rode as migrations do Laravel
+```
+cd app
+php artisan migrate
+```
+
 Acesse o seu localhost e pronto, o projeto ja é para estar funcionando.
 
 ## 🔧 rodando os testes <a name = "tests"></a>
 Para testar a aplicação utilizando tdd voce pode utilizar o comando do unit, nele foram criado alguns testes padroes, e bem simples apenas para demonstrar no desafio.
 
+acesse o sh do container da api
 ```
-vendor/bin/phpunit
+docker exec -it desafio-api sh
+```
+em seguida utilize o comando do phpunit
+```
+app/vendor/bin/phpunit
 ```
 
 Testes presentes:
