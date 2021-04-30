@@ -38,8 +38,8 @@ class Token
                 ErrorCodes::COD_HEADER_NO_KEY
             ), 400);
         }
-        echo env('x-api-id');exit;
-        if($request->header('x-api-id')==env('x-api-id') && $request->header('x-api-key')==env('x-api-key')){
+
+        if(!$request->header('x-api-id')==env('x-api-id') && !$request->header('x-api-key')==env('x-api-key')){
             return $next($request);
         }
         else{

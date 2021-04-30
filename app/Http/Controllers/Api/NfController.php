@@ -19,6 +19,9 @@ class NfController extends Controller
         $this->Nfe = $Nfe;
     }
 
+    /**
+     * endpoint apenas para visualizar as notas que constam na arquivei
+     */
     public function index(){
         try{
             $NfeApi = new NfeApi();
@@ -55,11 +58,14 @@ class NfController extends Controller
         }
     }
 
+    /**
+     * endpoint solicitado no desafio
+     */
     public function show(Request $Request, $Access_key){
         try{
-            $NfeData = $this->Nfe->select("chnfe", "nnf", "vnf")->where("chnfe", $Access_key)->get()->toArray();
+            $Nfe = $this->Nfe->select()->where("chnfe", $Access_key)->first();
 
-            if(!$NfeData || $Request->nocache){
+            if(!$Nfe || $Request->nocache){
                 $NfeApi = new NfeApi();
                 $NfeApiCallback = $NfeApi->received($Access_key);
 
@@ -82,9 +88,25 @@ class NfController extends Controller
                     "vnf"   => $xml->NFe->infNFe->total->ICMSTot->vNF,
                 ];
 
-                $this->Nfe->create(array_merge($NfeData, [
-                    "xml"   => $NfeApiCallback->data[0]->xml
-                ]));
+                if(!$Nfe){
+                    $this->Nfe->create([
+                        "chnfe" => $Access_key,
+                        "nnf"   => $xml->NFe->infNFe->ide->nNF,
+                        "vnf"   => $xml->NFe->infNFe->total->ICMSTot->vNF,
+                        "xml"   => $NfeApiCallback->data[0]->xml
+                    ]);
+                }else{
+                    $Nfe = $this->Nfe->find($Nfe->id);
+                    $Nfe->update(arraY_merge($NfeData,[
+                        "xml"   => $NfeApiCallback->data[0]->xml
+                    ]));
+                }
+            }else{
+                $NfeData = [
+                    "chnfe" => $Nfe->chnfe,
+                    "nnf"   => $Nfe->nnf,
+                    "vnf"   => $Nfe->vnf,
+                ];
             }
 
             return response()->json(dataPrepare::successMessage(
