@@ -62,7 +62,7 @@ class NfController extends Controller
     public function show(Request $request, $accessKey)
     {
         try {
-            $nfe = $this->nfe->select()->where("chnfe", $accessKey)->first();
+            $nfe = $this->nfe->findByChnfe($accessKey);
 
             if (!$nfe || $request->noCache) {
                 $nfeApi = new NfeApi();
@@ -83,27 +83,18 @@ class NfController extends Controller
 
                 $nfeData = [
                     "chnfe" => $accessKey,
-                    "nnf"   => $xml->NFe->infNFe->ide->nNF,
                     "vnf"   => $xml->NFe->infNFe->total->ICMSTot->vNF,
                 ];
 
                 if (!$nfe) {
-                    $this->nfe->create([
-                        "chnfe" => $accessKey,
-                        "nnf"   => $xml->NFe->infNFe->ide->nNF,
-                        "vnf"   => $xml->NFe->infNFe->total->ICMSTot->vNF,
-                        "xml"   => $nfeApiCallback->data[0]->xml
-                    ]);
+                    $this->nfe->create($nfeData);
                 } else {
                     $nfe = $this->nfe->find($nfe->id);
-                    $nfe->update(arraY_merge($nfeData, [
-                        "xml"   => $nfeApiCallback->data[0]->xml
-                    ]));
+                    $nfe->update($nfeData);
                 }
             } else {
                 $nfeData = [
                     "chnfe" => $nfe->chnfe,
-                    "nnf"   => $nfe->nnf,
                     "vnf"   => $nfe->vnf,
                 ];
             }
