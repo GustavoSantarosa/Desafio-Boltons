@@ -24,8 +24,8 @@ class Nfe extends Model
         'xml',
     ];
 
-    public function findByChnfe($accessKey){
+    public function findByChnfe($accessKey)
+    {
         return $this->select()->where("chnfe", $accessKey)->first();
     }
-
 }
