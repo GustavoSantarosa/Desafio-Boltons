@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use exception;
 use App\Lib\ErrorCodes;
+use App\Lib\XmlPrepare;
 use App\Lib\DataPrepare;
-
 use App\Jobs\receiveNfes;
 use Illuminate\Http\Request;
 use App\Models\Faturamento\Nfe;
@@ -85,17 +85,16 @@ class NfController extends Controller
                     }
                 }
 
-                $xml = json_decode(json_encode(simplexml_load_string(base64_decode($nfeApiCallback->data[0]->xml))));
-                $nfe->chnfe = $accessKey;
-
-                if (!isset($xml->NFe)) {
-                    $xml->NFe = $xml;
-                }
-                $nfe->vnf = $xml->NFe->infNFe->total->ICMSTot->vNF;
+                $xmlPrepare = new XmlPrepare($nfeApiCallback->data[0]->xml, $accessKey);
 
                 if (!$nfe) {
-                    $this->nfe->create($nfe);
+                    $nfe = $this->nfe->create([
+                        "chnfe" => $xmlPrepare->chnfe,
+                        "vnf"   => $xmlPrepare->vnf
+                    ]);
                 } else {
+                    $nfe->chnfe = $xmlPrepare->chnfe;
+                    $nfe->vnf   = $xmlPrepare->vnf;
                     $nfe->update();
                 }
             }

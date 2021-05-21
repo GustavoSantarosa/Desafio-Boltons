@@ -2,7 +2,7 @@
 
 namespace App\Lib;
 
-final class dataPrepare
+final class DataPrepare
 {
     public static function makeMessage($success, $message, $code, $data = null)
     {
