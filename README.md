@@ -34,6 +34,23 @@ e rode as migrations do Laravel
 cd app
 php artisan migrate
 ```
+e por ultimo precisamos levantar o worker que vai processar a fila no laravel
+```
+php artisan queue:work
+```
+Em seguidas temos alguns comandos uteis para facilitar a vida do dev
+- para printar o env do container
+```
+docker exec -it desafio-api printenv
+```
+-  Para deletar todos os containers
+```
+docker rm -f $(docker ps -a -q)
+```
+- para restartar a fila
+```
+php artisan queue:restart
+```
 
 Acesse o seu localhost e pronto, o projeto ja é para estar funcionando.
 
@@ -66,12 +83,12 @@ curl -X GET \
   -H 'x-api-key: 5678'
 ```
 
-No desafio, foram criados 2 endpoints, o primeiro é apenas uma consulta de notas na api da arquivei para podermos buscar uma chave de acesso para utilizarmos como exemplo no desafio.
+No desafio, foram criados 2 endpoints, o primeiro é um endpoint que busca por todas os xmls na arquivei e armazena em seu banco de dados.
 ```
 localhost/api/v1/nf
 ```
-
-e o segundo é o que foi proposto no desafio.
+- ele faz a coleta de 50 em 50 xmls da arquivei e joga em uma fila dentro do banco de dados até que todos estejam na fila.
+- em seguida um worker processa a fila utilizando um job, que checa se a nota ja existe no banco de dados, caso não, ele inseri.
 ```
 localhost/api/v1/nf/chave/{chave}
 ```

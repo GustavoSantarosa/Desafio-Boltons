@@ -2,128 +2,121 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Lib\ErrorCodes;
-use App\Lib\DataPrepare;
 use exception;
-
-use App\Repository\Arquivei\NfeApi;
-use App\Http\Controllers\Controller;
+use App\Lib\ErrorCodes;
+use App\Lib\XmlPrepare;
+use App\Lib\DataPrepare;
+use App\Jobs\receiveNfes;
 use Illuminate\Http\Request;
 use App\Models\Faturamento\Nfe;
+use App\Repository\Arquivei\NfeApi;
+use App\Http\Controllers\Controller;
 
 class NfController extends Controller
 {
-    private $Produto;
+    private $nfe;
 
-    public function __construct(Nfe $Nfe){
-        $this->Nfe = $Nfe;
+    public function __construct(Nfe $nfe)
+    {
+        $this->nfe = $nfe;
     }
 
-    /**
-     * endpoint apenas para visualizar as notas que constam na arquivei
-     */
-    public function index(){
-        try{
-            $NfeApi = new NfeApi();
-            $NfeApiCallback = $NfeApi->received();
+    public function index()
+    {
+        try {
+            $cursor = 0;
 
-            if($NfeApiCallback->status->code != 200){
-                return response()->json([
-                    "success"   => false
-                ]);
-                return response()->json(DataPrepare::errorMessage(
-                    "A api esta temporariamente em manutenção, tente novamente mais tarde!",
-                    ErrorCodes::COD_SISTEMA_FORA
-                ), 200);
-            }
+            do {
+                $nfeApi = new NfeApi();
+                $nfeApiCallback = $nfeApi->receiveAll($cursor);
 
+                if ($nfeApiCallback->status->code != 200) {
+                    return response()->json(DataPrepare::makeMessage(
+                        false,
+                        "The api is temporarily under maintenance, please try again later!",
+                        ErrorCodes::CODE_SYSTEM_OUT
+                    ), 200);
+                }
 
-            return response()->json(dataPrepare::successMessage(
-                "Notas buscadas com sucesso",
-                ErrorCodes::COD_ENVIADO_SUCESSO,
-                $NfeApiCallback->data
+                receiveNfes::dispatch($nfeApiCallback->data, $this->nfe)->delay(now()->addSeconds('1'));
+                $cursor += 50;
+            } while ($nfeApiCallback->count == 50);
+
+            return response()->json(dataPrepare::makeMessage(
+                true,
+                "Notes received successfully",
+                ErrorCodes::CODE_SENT_SUCCESS,
             ), 200);
-        }catch(exception $e){
-            if(!config("app.debug")){
-                return response()->json(DataPrepare::errorMessage(
-                    "A api esta temporariamente em manutenção, tente novamente mais tarde!",
-                    ErrorCodes::COD_ERRO_NAO_IDENTIFICADO
+        } catch (exception $e) {
+            if (!config("app.debug")) {
+                return response()->json(DataPrepare::makeMessage(
+                    false,
+                    "The api is temporarily under maintenance, please try again later!",
+                    ErrorCodes::CODE_UNIDENTIFIED_ERROR
                 ), 500);
-            }else{
-                return response()->json(DataPrepare::errorMessage(
+            } else {
+                return response()->json(DataPrepare::makeMessage(
+                    false,
                     $e->getMessage(),
-                    ErrorCodes::COD_ERRO_NAO_IDENTIFICADO
+                    ErrorCodes::CODE_UNIDENTIFIED_ERROR
                 ), 500);
             }
         }
     }
 
-    /**
-     * endpoint solicitado no desafio
-     */
-    public function show(Request $Request, $Access_key){
-        try{
-            $Nfe = $this->Nfe->select()->where("chnfe", $Access_key)->first();
+    public function show(Request $request, $accessKey)
+    {
+        try {
+            $nfe = $this->nfe->findByChnfe($accessKey);
 
-            if(!$Nfe || $Request->nocache){
-                $NfeApi = new NfeApi();
-                $NfeApiCallback = $NfeApi->received($Access_key);
+            if (!$nfe || $request->noCache) {
+                $nfeApi = new NfeApi();
+                $nfeApiCallback = $nfeApi->findByAccessKeyAndReceive($accessKey);
 
-                if($NfeApiCallback->status->code != 200){
-                    if(config("app.debug")){
-                        return response()->json($NfeApiCallback, 200);
-                    }else{
-                        return response()->json(DataPrepare::errorMessage(
-                            "A api esta temporariamente em manutenção, tente novamente mais tarde!",
-                            ErrorCodes::COD_SISTEMA_FORA
+                if ($nfeApiCallback->status->code != 200) {
+                    if (config("app.debug")) {
+                        return response()->json($nfeApiCallback, 200);
+                    } else {
+                        return response()->json(DataPrepare::makeMessage(
+                            false,
+                            "The api is temporarily under maintenance, please try again later!",
+                            ErrorCodes::CODE_SYSTEM_OUT
                         ), 200);
                     }
                 }
 
-                $xml = json_decode(json_encode(simplexml_load_string(base64_decode($NfeApiCallback->data[0]->xml))));
+                $xmlPrepare = new XmlPrepare($nfeApiCallback->data[0]->xml, $accessKey);
 
-                $NfeData = [
-                    "chnfe" => $Access_key,
-                    "nnf"   => $xml->NFe->infNFe->ide->nNF,
-                    "vnf"   => $xml->NFe->infNFe->total->ICMSTot->vNF,
-                ];
-
-                if(!$Nfe){
-                    $this->Nfe->create([
-                        "chnfe" => $Access_key,
-                        "nnf"   => $xml->NFe->infNFe->ide->nNF,
-                        "vnf"   => $xml->NFe->infNFe->total->ICMSTot->vNF,
-                        "xml"   => $NfeApiCallback->data[0]->xml
+                if (!$nfe) {
+                    $nfe = $this->nfe->create([
+                        "chnfe" => $xmlPrepare->chnfe,
+                        "vnf"   => $xmlPrepare->vnf
                     ]);
-                }else{
-                    $Nfe = $this->Nfe->find($Nfe->id);
-                    $Nfe->update(arraY_merge($NfeData,[
-                        "xml"   => $NfeApiCallback->data[0]->xml
-                    ]));
+                } else {
+                    $nfe->chnfe = $xmlPrepare->chnfe;
+                    $nfe->vnf   = $xmlPrepare->vnf;
+                    $nfe->update();
                 }
-            }else{
-                $NfeData = [
-                    "chnfe" => $Nfe->chnfe,
-                    "nnf"   => $Nfe->nnf,
-                    "vnf"   => $Nfe->vnf,
-                ];
             }
 
-            return response()->json(dataPrepare::successMessage(
-                "A nota com a chave de acesso '{$Access_key}' foi localizada com sucesso!",
-                ErrorCodes::COD_ENVIADO_SUCESSO,
-                $NfeData
+            return response()->json(dataPrepare::makeMessage(
+                true,
+                "The note with access key '{$accessKey}' was successfully located!",
+                ErrorCodes::CODE_SENT_SUCCESS,
+                $nfe
             ), 200);
-        }catch(exception $e){
-            if(!config("app.debug")){
-                return response()->json(DataPrepare::errorMessage(
-                    "A api esta temporariamente em manutenção, tente novamente mais tarde!",
-                    ErrorCodes::COD_ERRO_NAO_IDENTIFICADO
+        } catch (exception $e) {
+            if (!config("app.debug")) {
+                return response()->json(DataPrepare::makeMessage(
+                    false,
+                    "The api is temporarily under maintenance, please try again later!",
+                    ErrorCodes::CODE_UNIDENTIFIED_ERROR
                 ), 500);
-            }else{
-                return response()->json(DataPrepare::errorMessage(
+            } else {
+                return response()->json(DataPrepare::makeMessage(
+                    false,
                     $e->getMessage(),
-                    ErrorCodes::COD_ERRO_NAO_IDENTIFICADO
+                    ErrorCodes::CODE_UNIDENTIFIED_ERROR
                 ), 500);
             }
         }

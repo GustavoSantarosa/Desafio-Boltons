@@ -10,6 +10,7 @@ class Nfe extends Model
     use HasFactory;
 
     protected $table = "nfes";
+    public $timestamps = false;
 
     /**
      * The attributes that are mass assignable.
@@ -22,4 +23,9 @@ class Nfe extends Model
         'vnf',
         'xml',
     ];
+
+    public function findByChnfe($accessKey)
+    {
+        return $this->select()->where("chnfe", $accessKey)->first();
+    }
 }

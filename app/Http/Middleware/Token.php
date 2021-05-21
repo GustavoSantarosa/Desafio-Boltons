@@ -18,35 +18,38 @@ class Token
      */
     public function handle(Request $request, Closure $next)
     {
-        if($request->header('Content-Type') != "application/json"){
-            return response()->json(DataPrepare::errorMessage(
+        if ($request->header('Content-Type') != "application/json") {
+            return response()->json(DataPrepare::makeMessage(
+                false,
                 "Bad Request. Invalid Content-Type.",
-                ErrorCodes::COD_HEADER_NO_JSON
+                ErrorCodes::CODE_HEADER_NO_JSON
             ), 400);
         }
 
-        if(!$request->header('x-api-id')){
-            return response()->json(DataPrepare::errorMessage(
+        if (!$request->header('x-api-id')) {
+            return response()->json(DataPrepare::makeMessage(
+                false,
                 "Bad Request. Configure your X-API-ID in header and try again.",
-                ErrorCodes::COD_HEADER_NO_ID
+                ErrorCodes::CODE_HEADER_NO_ID
             ), 400);
         }
 
-        if(!$request->header('x-api-key')){
-            return response()->json(DataPrepare::errorMessage(
+        if (!$request->header('x-api-key')) {
+            return response()->json(DataPrepare::makeMessage(
+                false,
                 "Bad Request. Configure your X-API-KEY in header and try again.",
-                ErrorCodes::COD_HEADER_NO_KEY
+                ErrorCodes::CODE_HEADER_NO_KEY
             ), 400);
         }
 
-        if(!$request->header('x-api-id')==env('x-api-id') && !$request->header('x-api-key')==env('x-api-key')){
-            return $next($request);
-        }
-        else{
-            return response()->json(DataPrepare::errorMessage(
+        if ($request->header('x-api-id') != env('DESAFIO_ID') || $request->header('x-api-key') != env('DESAFIO_KEY')) {
+            return response()->json(DataPrepare::makeMessage(
+                false,
                 "Unauthorized. Invalid X-API-KEY or X-API-ID.",
-                ErrorCodes::COD_HEADER_NO_KEY
+                ErrorCodes::CODE_HEADER_NO_KEY
             ), 401);
         }
+
+        return $next($request);
     }
 }
